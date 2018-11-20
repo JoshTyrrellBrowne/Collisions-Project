@@ -75,6 +75,7 @@ int main()
 	// Collision result
 	int resultOne = 0;
 	int resultTwo = 0;	// for circle
+	int resultThree = 0;
 
 	// Direction of movement of NPC
 	sf::Vector2f direction(0.01f, 0.02f);
@@ -94,10 +95,18 @@ int main()
 	polygon.setPointCount(3);
 	polygon.setOrigin(40, 40);
 	polygon.setFillColor(sf::Color::Green);
-	//polygon.set
+	polygon.setPoint(0, sf::Vector2f(40, 40));
+	polygon.setPoint(1, sf::Vector2f(40, 80));
+	polygon.setPoint(2, sf::Vector2f(80, 40));
+
 	c2Poly cPolygon;
 	cPolygon.count = polygon.getPointCount();
-	//cPolygon.verts[0] = 
+	//p1
+	cPolygon.verts[0] = c2V(polygon.getPoint(0).x, polygon.getPoint(0).y);
+	//p2
+	cPolygon.verts[1] = c2V(polygon.getPoint(1).x, polygon.getPoint(1).y);
+	//p3
+	cPolygon.verts[2] = c2V(polygon.getPoint(2).x, polygon.getPoint(2).y);
 
 	// Start the game loop
 	while (window.isOpen())
@@ -127,6 +136,7 @@ int main()
 		
 		npc.getAnimatedSprite().setPosition(move_to);
 		circle.setPosition(move_to + sf::Vector2f(130, -40));
+		polygon.setPosition(move_to + sf::Vector2f(190, -40));
 
 		// Update NPC AABB set x and y
 		aabb_npc.min = c2V(
@@ -198,7 +208,17 @@ int main()
 		cCirclePos.y = circle.getPosition().y;
 		cTwoCircle.p = cCirclePos;
 		resultTwo = c2CircletoAABB(cTwoCircle, aabb_player);
-	
+
+		// set polygon cv2 positions
+		//p1
+		cPolygon.verts[0] = c2V(polygon.getPoint(0).x, polygon.getPoint(0).y);
+		//p2
+		cPolygon.verts[1] = c2V(polygon.getPoint(1).x, polygon.getPoint(1).y);
+		//p3
+		cPolygon.verts[2] = c2V(polygon.getPoint(2).x, polygon.getPoint(2).y);
+
+		//const c2Poly * ptrPoly = &cPolygon;
+		resultThree = c2AABBtoPoly(aabb_player, &cPolygon);
 
 		cout << ((resultOne != 0) ? ("Collision") : "") << endl;
 		if (resultOne || resultTwo){
@@ -219,6 +239,8 @@ int main()
 
 		// Draw the NPC's Current Animated Sprite
 		window.draw(npc.getAnimatedSprite());
+
+		window.draw(polygon);
 
 		// Update the window
 		window.display();
