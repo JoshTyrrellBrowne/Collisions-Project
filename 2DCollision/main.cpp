@@ -98,6 +98,7 @@ int main()
 	polygon.setPoint(0, sf::Vector2f(40, 40));
 	polygon.setPoint(1, sf::Vector2f(40, 80));
 	polygon.setPoint(2, sf::Vector2f(80, 40));
+	
 
 	c2Poly cPolygon;
 	cPolygon.count = polygon.getPointCount();
@@ -107,6 +108,8 @@ int main()
 	cPolygon.verts[1] = c2V(polygon.getPoint(1).x, polygon.getPoint(1).y);
 	//p3
 	cPolygon.verts[2] = c2V(polygon.getPoint(2).x, polygon.getPoint(2).y);
+
+	c2MakePoly(&cPolygon);
 
 	// Start the game loop
 	while (window.isOpen())
@@ -211,17 +214,27 @@ int main()
 
 		// set polygon cv2 positions
 		//p1
-		cPolygon.verts[0] = c2V(polygon.getPoint(0).x, polygon.getPoint(0).y);
+		//cPolygon.verts[0] = c2V(polygon.getPoint(0).x, polygon.getPoint(0).y);
 		//p2
-		cPolygon.verts[1] = c2V(polygon.getPoint(1).x, polygon.getPoint(1).y);
+		//cPolygon.verts[1] = c2V(polygon.getPoint(1).x, polygon.getPoint(1).y);
 		//p3
-		cPolygon.verts[2] = c2V(polygon.getPoint(2).x, polygon.getPoint(2).y);
+		//cPolygon.verts[2] = c2V(polygon.getPoint(2).x, polygon.getPoint(2).y);
+
+		//p1
+		cPolygon.verts[0].x = polygon.getPoint(0).x;
+		cPolygon.verts[0].y = polygon.getPoint(0).y;
+		//p2
+		cPolygon.verts[1].x = polygon.getPoint(1).x;
+		cPolygon.verts[1].y = polygon.getPoint(1).y;
+		//p3
+		cPolygon.verts[2].x = polygon.getPoint(2).x;
+		cPolygon.verts[2].y = polygon.getPoint(2).y;
 
 		//const c2Poly * ptrPoly = &cPolygon;
-		resultThree = c2AABBtoPoly(aabb_player, &cPolygon);
+		resultThree = c2AABBtoPoly(aabb_player, &cPolygon, &polygon.getTransform());
 
 		cout << ((resultOne != 0) ? ("Collision") : "") << endl;
-		if (resultOne || resultTwo){
+		if (resultOne || resultTwo || resultThree){
 			player.getAnimatedSprite().setColor(sf::Color(255,0,0));
 		}
 		else {
