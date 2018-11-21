@@ -74,8 +74,10 @@ int main()
 
 	// Collision result
 	int resultOne = 0;
-	int resultTwo = 0;	// for circle
-	int resultThree = 0;
+	int resultTwo = 0;		// for circle
+	int resultThree = 0;	// for polygon
+	int resultFour = 0;		// for capsule
+
 
 	// Direction of movement of NPC
 	sf::Vector2f direction(0.01f, 0.02f);
@@ -93,13 +95,12 @@ int main()
 	//Polygon=====================================
 	sf::ConvexShape polygon;
 	polygon.setPointCount(3);
-	polygon.setOrigin(40, 40);
+	polygon.setOrigin(0, 0);
 	polygon.setFillColor(sf::Color::Green);
 	polygon.setPoint(0, sf::Vector2f(40, 40));
 	polygon.setPoint(1, sf::Vector2f(40, 80));
 	polygon.setPoint(2, sf::Vector2f(80, 40));
 	
-
 	c2Poly cPolygon;
 	cPolygon.count = polygon.getPointCount();
 	//p1
@@ -109,7 +110,28 @@ int main()
 	//p3
 	cPolygon.verts[2] = c2V(polygon.getPoint(2).x, polygon.getPoint(2).y);
 
-	c2MakePoly(&cPolygon);
+
+	//Capsule====================================
+	sf::CircleShape capsuleCircleOne;
+	capsuleCircleOne.setPosition(50, 50);
+	capsuleCircleOne.setRadius(25);
+	capsuleCircleOne.setOrigin(capsuleCircleOne.getRadius(), capsuleCircleOne.getRadius());	
+	capsuleCircleOne.setFillColor(sf::Color::Blue);
+
+	sf::CircleShape capsuleCircleTwo;
+	//capsuleCircleTwo.setPosition(0, 50);
+	capsuleCircleTwo.setRadius(capsuleCircleOne.getRadius());
+	capsuleCircleTwo.setOrigin(capsuleCircleOne.getRadius(), capsuleCircleOne.getRadius());
+	capsuleCircleTwo.setFillColor(sf::Color::Blue);
+
+	sf::RectangleShape capsuleRectangle;
+	capsuleRectangle.setFillColor(sf::Color::Blue);
+	capsuleRectangle.setSize(sf::Vector2f(70, capsuleCircleOne.getRadius() * 2));
+	
+	c2Capsule c2capsule;
+	c2capsule.a = c2V(capsuleCircleOne.getPosition().x, capsuleCircleOne.getPosition().y);
+	c2capsule.b = c2V(capsuleCircleTwo.getPosition().x, capsuleCircleTwo.getPosition().y);
+	c2capsule.r = capsuleCircleOne.getRadius();
 
 	// Start the game loop
 	while (window.isOpen())
@@ -139,7 +161,26 @@ int main()
 		
 		npc.getAnimatedSprite().setPosition(move_to);
 		circle.setPosition(move_to + sf::Vector2f(130, -40));
-		polygon.setPosition(move_to + sf::Vector2f(190, -40));
+		//polygon.setPosition(move_to + sf::Vector2f(190, -40));
+		//p1
+		cPolygon.verts[0].x = cPolygon.verts[0].x + 0.01;
+		cPolygon.verts[0].y = cPolygon.verts[0].y + 0.01;
+		//p2
+		cPolygon.verts[1].x = cPolygon.verts[1].x + 0.01;
+		cPolygon.verts[1].y = cPolygon.verts[1].y + 0.01;
+		//p3
+		cPolygon.verts[2].x = cPolygon.verts[2].x + 0.01;
+		cPolygon.verts[2].y = cPolygon.verts[2].y + 0.01;
+		//set sf::polygon points
+		polygon.setPoint(0, sf::Vector2f(cPolygon.verts[0].x, cPolygon.verts[0].y));
+		polygon.setPoint(1, sf::Vector2f(cPolygon.verts[1].x, cPolygon.verts[1].y));
+		polygon.setPoint(2, sf::Vector2f(cPolygon.verts[2].x, cPolygon.verts[2].y));
+
+		// set capsule parts
+
+		capsuleRectangle.setPosition(capsuleCircleOne.getPosition().x, capsuleCircleOne.getPosition().y - capsuleCircleOne.getRadius());
+		capsuleCircleTwo.setPosition(capsuleRectangle.getPosition().x + capsuleRectangle.getSize().x,
+			capsuleRectangle.getPosition().y + capsuleCircleOne.getRadius());
 
 		// Update NPC AABB set x and y
 		aabb_npc.min = c2V(
@@ -207,34 +248,22 @@ int main()
 
 		// Check for collisions
 		resultOne = c2AABBtoAABB(aabb_player, aabb_npc);
+		
 		cCirclePos.x = circle.getPosition().x;
 		cCirclePos.y = circle.getPosition().y;
 		cTwoCircle.p = cCirclePos;
 		resultTwo = c2CircletoAABB(cTwoCircle, aabb_player);
 
-		// set polygon cv2 positions
-		//p1
-		//cPolygon.verts[0] = c2V(polygon.getPoint(0).x, polygon.getPoint(0).y);
-		//p2
-		//cPolygon.verts[1] = c2V(polygon.getPoint(1).x, polygon.getPoint(1).y);
-		//p3
-		//cPolygon.verts[2] = c2V(polygon.getPoint(2).x, polygon.getPoint(2).y);
+		resultThree = c2AABBtoPoly(aabb_player, &cPolygon, NULL);
 
-		//p1
-		cPolygon.verts[0].x = polygon.getPoint(0).x;
-		cPolygon.verts[0].y = polygon.getPoint(0).y;
-		//p2
-		cPolygon.verts[1].x = polygon.getPoint(1).x;
-		cPolygon.verts[1].y = polygon.getPoint(1).y;
-		//p3
-		cPolygon.verts[2].x = polygon.getPoint(2).x;
-		cPolygon.verts[2].y = polygon.getPoint(2).y;
-
-		//const c2Poly * ptrPoly = &cPolygon;
-		resultThree = c2AABBtoPoly(aabb_player, &cPolygon, &polygon.getTransform());
+		//capsule workings..
+		c2capsule.a = c2V(capsuleCircleOne.getPosition().x, capsuleCircleOne.getPosition().y);
+		c2capsule.b = c2V(capsuleCircleTwo.getPosition().x, capsuleCircleTwo.getPosition().y);
+		c2capsule.r = capsuleCircleOne.getRadius();
+		resultFour = c2AABBtoCapsule(aabb_player, c2capsule);
 
 		cout << ((resultOne != 0) ? ("Collision") : "") << endl;
-		if (resultOne || resultTwo || resultThree){
+		if (resultOne || resultTwo || resultThree || resultFour){
 			player.getAnimatedSprite().setColor(sf::Color(255,0,0));
 		}
 		else {
@@ -254,6 +283,10 @@ int main()
 		window.draw(npc.getAnimatedSprite());
 
 		window.draw(polygon);
+
+		window.draw(capsuleCircleOne);
+		window.draw(capsuleCircleTwo);
+		window.draw(capsuleRectangle);
 
 		// Update the window
 		window.display();
