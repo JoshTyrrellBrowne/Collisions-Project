@@ -1,3 +1,8 @@
+/// <summary>
+/// Author:Josh Tyrrell Browne
+/// Date: Nov 2018
+/// </summary>
+
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #define TINYC2_IMPL
@@ -18,6 +23,7 @@ int main()
 
 	sf::Vector2f offScreen{ -100,-100 };
 	int playerType{ 0 };
+	float polyMovement{ 0.05f };
 
 	//player sf::rectangle
 	sf::RectangleShape playerSquare;
@@ -55,6 +61,16 @@ int main()
 	playerC2Capsule.b = c2V(playerCapsuleCircleTwo.getPosition().x, playerCapsuleCircleTwo.getPosition().y);
 	playerC2Capsule.r = playerCapsuleCircleOne.getRadius();
 
+	//player ray 
+	sf::VertexArray vertArray;
+	sf::Vertex vertOne{sf::Vector2f(20,20)};
+	sf::Vertex vertTwo;
+	vertArray.append(vertOne);
+	vertArray.append(vertTwo);
+	vertArray.setPrimitiveType(sf::Lines);
+
+	c2Ray cRay;
+
 	//Setup NPC AABB
 	c2AABB aabb_npc;
 
@@ -85,6 +101,12 @@ int main()
 	int resultThreeCapsule = 0;	// for circle
 	int resultFourCapsule = 0;		// for poly
 
+	// Collision reults for playerRay..
+	int resultOneRay = 0;		// for square
+	int resultTwoRay = 0;		// for capsule
+	int resultThreeRay = 0;	// for circle
+	int resultFourRay = 0;		// for poly
+
 
 	// Direction of movement of NPC
 	sf::Vector2f direction(0.01f, 0.02f);
@@ -110,9 +132,9 @@ int main()
 	polygon.setPointCount(3);
 	polygon.setOrigin(0, 0);
 	polygon.setFillColor(sf::Color::Blue);
-	polygon.setPoint(0, sf::Vector2f(40, 40));
-	polygon.setPoint(1, sf::Vector2f(40, 80));
-	polygon.setPoint(2, sf::Vector2f(80, 40));
+	polygon.setPoint(0, sf::Vector2f(0, 0));
+	polygon.setPoint(1, sf::Vector2f(0, 80));
+	polygon.setPoint(2, sf::Vector2f(80, 0));
 	
 	c2Poly cPolygon;
 	cPolygon.count = polygon.getPointCount();
@@ -149,6 +171,7 @@ int main()
 	// Start the game loop
 	while (window.isOpen())
 	{
+		
 		// Move Sprite Follow Mouse
 		switch (playerType) {
 		case 0:
@@ -158,6 +181,9 @@ int main()
 			playerCapsuleCircleOne.setPosition(offScreen);
 			playerCapsuleCircleTwo.setPosition(offScreen);
 			playerCapsuleRectangle.setPosition(offScreen);
+			//ray..
+			vertOne.position = offScreen;
+			vertTwo.position = offScreen;
 			break;
 		case 1:
 			playerCircle.setPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window)));
@@ -166,6 +192,9 @@ int main()
 			playerCapsuleCircleOne.setPosition(offScreen);
 			playerCapsuleCircleTwo.setPosition(offScreen);
 			playerCapsuleRectangle.setPosition(offScreen);
+			//ray..
+			vertOne.position = offScreen;
+			vertTwo.position = offScreen;
 			break;
 		case 2:
 			playerCapsuleCircleOne.setPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window)));
@@ -175,7 +204,23 @@ int main()
 
 			playerCircle.setPosition(offScreen);
 			playerSquare.setPosition(offScreen);
+			//ray..
+			vertOne.position = offScreen;
+			vertTwo.position = offScreen;
 			break;
+		case 3:
+			// ray
+			vertOne.position = sf::Vector2f{ 600,500 };
+			vertTwo.position = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+			playerCircle.setPosition(offScreen);
+			playerSquare.setPosition(offScreen);
+
+			//capsule..
+			playerCapsuleCircleOne.setPosition(offScreen);
+			playerCapsuleCircleTwo.setPosition(offScreen);
+			playerCapsuleRectangle.setPosition(offScreen);
+			
 		}
 
 		
@@ -202,15 +247,19 @@ int main()
 		square.setPosition(move_to);
 		circle.setPosition(move_to + sf::Vector2f(130, -40));
 		//polygon.setPosition(move_to + sf::Vector2f(190, -40));  -> this way wont work i think
+		if (polygon.getPoint(1).y > window.getSize().y || polygon.getPoint(0).y < 0)
+		{
+			polyMovement = polyMovement * -1;
+		}
 		//p1
-		cPolygon.verts[0].x = cPolygon.verts[0].x + 0.01;
-		cPolygon.verts[0].y = cPolygon.verts[0].y + 0.01;
+		cPolygon.verts[0].x = cPolygon.verts[0].x + polyMovement; //polyMovement is 0.01 initially
+		cPolygon.verts[0].y = cPolygon.verts[0].y + polyMovement;
 		//p2
-		cPolygon.verts[1].x = cPolygon.verts[1].x + 0.01;
-		cPolygon.verts[1].y = cPolygon.verts[1].y + 0.01;
+		cPolygon.verts[1].x = cPolygon.verts[1].x + polyMovement;
+		cPolygon.verts[1].y = cPolygon.verts[1].y + polyMovement;
 		//p3
-		cPolygon.verts[2].x = cPolygon.verts[2].x + 0.01;
-		cPolygon.verts[2].y = cPolygon.verts[2].y + 0.01;
+		cPolygon.verts[2].x = cPolygon.verts[2].x + polyMovement;
+		cPolygon.verts[2].y = cPolygon.verts[2].y + polyMovement;
 		//set sf::polygon points
 		polygon.setPoint(0, sf::Vector2f(cPolygon.verts[0].x, cPolygon.verts[0].y));
 		polygon.setPoint(1, sf::Vector2f(cPolygon.verts[1].x, cPolygon.verts[1].y));
@@ -233,6 +282,12 @@ int main()
 		aabb_player.max = c2V(playerSquare.getPosition().x + playerSquare.getGlobalBounds().width,
 								playerSquare.getPosition().y + playerSquare.getGlobalBounds().width);
 
+		//update player Ray..
+		cRay.d = c2V(vertTwo.position.x - vertOne.position.x, vertTwo.position.y - vertOne.position.y);
+		cRay.d = c2Norm(cRay.d);
+		cRay.p = c2V(vertOne.position.x, vertOne.position.y);
+		cRay.t = sqrt(((vertOne.position.x * vertOne.position.x) - (vertTwo.position.y * vertTwo.position.y)) + ((vertOne.position.y * vertOne.position.y) - (vertTwo.position.y * vertTwo.position.y)));
+		
 		// Process events
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -246,7 +301,7 @@ int main()
 			case sf::Event::KeyPressed:
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 				{
-					if (playerType < 2)
+					if (playerType < 3)
 					{
 						playerType++;
 					}
@@ -291,6 +346,13 @@ int main()
 		resultThreeCapsule = c2CircletoCapsule(cCircle, playerC2Capsule);
 		resultFourCapsule = c2CapsuletoPoly(playerC2Capsule, &cPolygon, NULL);
 
+		// collision checks for playerRay..
+		c2Raycast rayCast;
+		resultOneRay = c2RaytoAABB(cRay, aabb_npc, &rayCast);
+		resultTwoRay = c2RaytoCircle(cRay, cCircle, &rayCast);
+		resultThreeRay = c2RaytoCapsule(cRay, c2capsule, &rayCast);
+		resultFourRay = c2RaytoPoly(cRay, &cPolygon, NULL, &rayCast);
+
 		// Check for collisions ==============================================
 		// square to square
 		resultOneSquare = c2AABBtoAABB(aabb_player, aabb_npc);
@@ -309,20 +371,27 @@ int main()
 		resultFourSquare = c2AABBtoCapsule(aabb_player, c2capsule);
 
 		cout << ((resultOneSquare != 0) ? ("Collision") : "") << endl;
+		
 		if (resultOneSquare || resultTwoSquare || resultThreeSquare || resultFourSquare 
 			|| resultOneCircle || resultTwoCircle || resultThreeCircle || resultFourCircle 
-			|| resultOneCapsule || resultTwoCapsule || resultThreeCapsule|| resultFourCapsule)
+			|| resultOneCapsule || resultTwoCapsule || resultThreeCapsule|| resultFourCapsule
+			|| resultOneRay || resultTwoRay || resultThreeRay)// || resultFourRay)
 		{
 			playerSquare.setFillColor(sf::Color(255, 0, 0));
 			playerCircle.setFillColor(sf::Color(255, 0, 0));
+			vertOne.color = sf::Color(255, 0, 0);
+			vertTwo.color = sf::Color(255, 0, 0);
 			//capsule..
 			playerCapsuleCircleOne.setFillColor(sf::Color(255, 0, 0));
 			playerCapsuleCircleTwo.setFillColor(sf::Color(255, 0, 0));
 			playerCapsuleRectangle.setFillColor(sf::Color(255, 0, 0));
+			std::cout << "Collision" << std::endl;
 		}
 		else {
 			playerSquare.setFillColor(sf::Color(0, 255, 0));
 			playerCircle.setFillColor(sf::Color(0, 255, 0));
+			vertOne.color = sf::Color(0, 255, 0);
+			vertTwo.color = sf::Color(0, 255, 0);
 			//capsule..
 			playerCapsuleCircleOne.setFillColor(sf::Color(0, 255, 0));
 			playerCapsuleCircleTwo.setFillColor(sf::Color(0, 255, 0));
@@ -351,6 +420,11 @@ int main()
 		window.draw(capsuleCircleOne);
 		window.draw(capsuleCircleTwo);
 		window.draw(capsuleRectangle);
+
+		vertArray.clear();
+		vertArray.append(vertOne);
+		vertArray.append(vertTwo);
+		window.draw(vertArray);
 
 		// Update the window
 		window.display();
